@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="community.mapper">
+
+<delete id="comment_delete">
+	delete from communitycomment where id=#{id} 
+</delete>
+
+<update id="comment_update">
+	update communitycomment set content=#{content}
+	where id=#{id}
+</update>
+
+<insert id="comment_insert">
+	insert into communitycomment(pid, userid, content)
+	values (#{pid}, #{userid}, #{content})
+</insert>
+
+<select id="comment_list" resultType="community.CommentVO">
+	select to_char(writedate, 'yyyy-mm-dd hh24:mi:ss') writedate, 
+		   e.*, (select nickname from member
+	             where id=e.userid) name 
+	from communitycomment e
+	where pid= #{pid}
+	order by id desc
+</select>
+
+<update id="update">
+	update community 
+	set content=#{content},
+		co_file1=#{co_file1, jdbcType=VARCHAR}, 
+		co_file2=#{co_file2, jdbcType=VARCHAR},
+		co_file3=#{co_file3, jdbcType=VARCHAR},
+		co_filename1=#{co_filename1, jdbcType=VARCHAR},
+		co_filename2=#{co_filename2, jdbcType=VARCHAR},
+		co_filename3=#{co_filename3, jdbcType=VARCHAR}
+	where no=#{no}
+</update>
+
+<insert id="insert">
+	insert into community(no, root, content, co_file1, co_file2, co_file3, co_filename1, co_filename2, co_filename3, nickname, userid, user_pic)
+	values (seq_community.nextval, seq_community.currval, 
+    #{content}, #{co_file1, jdbcType=VARCHAR}, #{co_file2, jdbcType=VARCHAR}, 
+            #{co_file3, jdbcType=VARCHAR}, #{co_filename1, jdbcType=VARCHAR}, #{co_filename2, jdbcType=VARCHAR}, #{co_filename3, jdbcType=VARCHAR}, #{nickname}, 
+			#{userid}, #{user_pic, jdbcType=VARCHAR})
+</insert>
+
+<update id="good">
+	update community set good = good+1 where no=#{no}
+</update>
+
+<delete id="delete">
+	delete from community where no=#{no}
+</delete>
+
+<select id="detail" resultType="community.CommunityVO">
+	select (select id from member m
+			where m.id=n.userid) userid, n.* from community n where no=#{no}
+</select>
+
+
+<update id="read">
+	update community set readcnt = readcnt+1 where no=#{no}
+</update>
+
+
+<select id="list" resultType="community.CommunityVO">
+	select (select count(*) 
+         from communitycomment
+         where pid=b.no) comments, (select nickname from member where id = userid) userid, b.* 
+from (select rownum num, b.* from (select * from community <include refid="search"/>
+order by writedate, root, step desc) b order by num desc) b
+where num between #{beginList} and #{endList}
+	
+</select>
+
+<select id="totalCount" resultType="integer">
+	select count(*) from community <include refid="search"/>
+</select>
+
+<sql id="search">
+	<if test="search=='all'">
+		where content like '%' || #{keyword} || '%'
+		or userid in (select id from member
+		              where nickname like '%' || #{keyword} || '%' )
+	</if>
+	<if test="search=='content'">
+		where ${search} like '%' || #{keyword} || '%'
+	</if>
+	<if test="search=='userid'">
+		where userid in (select id from member
+		                 where nickname like '%' || #{keyword} || '%' )
+	</if>
+</sql>
+
+</mapper>

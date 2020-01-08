@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="recipe.mapper">
+
+ <sql id="search">
+		and title like '%' || #{keywords} || '%'
+</sql>
+
+<select id="list" resultType="recipe.RecipeVO">
+	select recipe_id, replace(imagepath, '\', '/') imagepath, title, nickname
+	from recipe r, member m
+	where r.userid=m.id(+)
+	<include refid="search"/>
+	<if test="cat_nm != null and cat_nm != ''">
+	  and ${cat_nm} = #{cat_val}
+	</if>
+	order by writedate desc
+</select>
+
+<select id="totalCount" resultType="integer">
+	select count(*) 
+	from recipe r, member m
+	where r.userid=m.id(+)
+	<if test="cat_nm != null and cat_nm != ''">
+	  and ${cat_nm} = #{cat_val}
+	</if>
+	<include refid="search"/>	
+	order by writedate desc
+</select>
+
+<insert id="rec_insert">
+	insert into recipe (recipe_id, userid, title, subtitle, cat1, cat2, cat3, cat4, portion, time, degree, imagepath)
+	values (seq_recipe.nextval, #{userid}, #{title}, #{subtitle}, #{cat1}, #{cat2}, #{cat3}, #{cat4}, #{portion}, #{time}, #{degree}, #{imagepath, jdbcType=VARCHAR})
+</insert>
+
+<insert id="mat_insert">
+	insert into materials (material_id, recipe_id, material_name0, material_unit0, material_name1, material_unit1, material_name2, material_unit2, material_name3, material_unit3, material_name4, material_unit4, material_name5, material_unit5,
+				material_name6, material_unit6, material_name7, material_unit7, material_name8, material_unit8, material_name9, material_unit9, material_name10, material_unit10, material_name11, material_unit11, material_name12, material_unit12)
+	values (seq_mat_id.nextval, seq_recipe.currval, #{material_name0, jdbcType=VARCHAR}, #{material_unit0, jdbcType=VARCHAR}, #{material_name1, jdbcType=VARCHAR}, #{material_unit1, jdbcType=VARCHAR}, #{material_name2, jdbcType=VARCHAR}, #{material_unit2, jdbcType=VARCHAR}, #{material_name3, jdbcType=VARCHAR}, #{material_unit3, jdbcType=VARCHAR},
+			#{material_name4, jdbcType=VARCHAR}, #{material_unit4, jdbcType=VARCHAR}, #{material_name5, jdbcType=VARCHAR}, #{material_unit5, jdbcType=VARCHAR}, #{material_name6, jdbcType=VARCHAR}, #{material_unit6, jdbcType=VARCHAR}, #{material_name7, jdbcType=VARCHAR}, #{material_unit7, jdbcType=VARCHAR},
+			#{material_name8, jdbcType=VARCHAR}, #{material_unit8, jdbcType=VARCHAR}, #{material_name9, jdbcType=VARCHAR}, #{material_unit9, jdbcType=VARCHAR}, #{material_name10, jdbcType=VARCHAR}, #{material_unit10, jdbcType=VARCHAR}, #{material_name11, jdbcType=VARCHAR}, #{material_unit11, jdbcType=VARCHAR}, #{material_name12, jdbcType=VARCHAR}, #{material_unit12, jdbcType=VARCHAR})
+</insert>
+
+<insert id="pic_insert">
+	insert into recipeimage (recipe_id, image1, image2, image3, image4, image5, image6, image7, image8, image9, image10)
+	values (seq_recipe.currval, #{image1, jdbcType=VARCHAR}, #{image2, jdbcType=VARCHAR}, #{image3, jdbcType=VARCHAR}, #{image4, jdbcType=VARCHAR}, #{image5, jdbcType=VARCHAR},
+			#{image6, jdbcType=VARCHAR}, #{image7, jdbcType=VARCHAR}, #{image8, jdbcType=VARCHAR}, #{image9, jdbcType=VARCHAR}, #{image10, jdbcType=VARCHAR})
+</insert>
+
+<insert id="text_insert">
+	insert into recipetext (recipe_id, text1, text2, text3, text4, text5, text6, text7, text8, text9, text10)
+	values (seq_recipe.currval, #{text1, jdbcType=VARCHAR}, #{text2, jdbcType=VARCHAR}, #{text3, jdbcType=VARCHAR}, #{text4, jdbcType=VARCHAR}, #{text5, jdbcType=VARCHAR},
+			#{text6, jdbcType=VARCHAR}, #{text7, jdbcType=VARCHAR}, #{text8, jdbcType=VARCHAR}, #{text9, jdbcType=VARCHAR}, #{text10, jdbcType=VARCHAR})
+</insert>
+
+<select id="detail" resultType="recipe.RecipeVO">
+	select r.userid, r.recipe_id, m.user_pic, title, subtitle, portion, time, degree, imagepath, cat1, cat2, cat3, cat4, nickname, good, readcnt, to_char(writedate, 'yyyy-mm-dd hh24:mi:ss') writedate, material_name0, material_unit0, material_name1, material_unit1, material_name2, material_unit2, material_name3, material_unit3,
+	material_name4, material_unit4, material_name5, material_unit5, material_name6, material_unit6, material_name7, material_unit7, material_name8, material_unit8, material_name9, material_unit9, material_name10, material_unit10, material_name11, material_unit11, material_name12, material_unit12,
+	image1, image2, image3, image4, image5, image6, image7, image8, image9, image10, text1, text2, text3, text4, text5, text6, text7, text8, text9, text10
+	from recipe r, member m, materials ma, recipeimage rm, recipetext rt
+	where r.userid=m.id(+)
+	and r.recipe_id=ma.recipe_id(+)
+	and r.recipe_id=rm.recipe_id(+)
+	and r.recipe_id=rt.recipe_id(+)
+	and r.recipe_id = #{recipe_id}
+</select>
+
+<update id="rec_update">
+	update recipe
+	set title=#{title}, subtitle=#{subtitle}, imagepath=#{imagepath, jdbcType=VARCHAR}, cat1=#{cat1}, cat2=#{cat2}, cat3=#{cat3}, cat4=#{cat4},
+		degree=#{degree}, portion=#{portion}, time=#{time}
+	where recipe_id=#{recipe_id}
+</update>
+
+<update id="mat_update">
+	update materials
+	set material_name0=#{material_name0, jdbcType=VARCHAR}, material_unit0=#{material_unit0, jdbcType=VARCHAR}, material_name1=#{material_name1, jdbcType=VARCHAR}, material_unit1=#{material_unit1, jdbcType=VARCHAR}, material_name2=#{material_name2, jdbcType=VARCHAR}, material_unit2=#{material_unit2, jdbcType=VARCHAR},
+		material_name3=#{material_name3, jdbcType=VARCHAR}, material_unit3=#{material_unit3, jdbcType=VARCHAR}, material_name4=#{material_name4, jdbcType=VARCHAR}, material_unit4=#{material_unit4, jdbcType=VARCHAR}, material_name5=#{material_name5, jdbcType=VARCHAR}, material_unit5=#{material_unit5, jdbcType=VARCHAR},
+		material_name6=#{material_name6, jdbcType=VARCHAR}, material_unit6=#{material_unit6, jdbcType=VARCHAR}, material_name7=#{material_name7, jdbcType=VARCHAR}, material_unit7=#{material_unit7, jdbcType=VARCHAR}, material_name8=#{material_name8, jdbcType=VARCHAR}, material_unit8=#{material_unit8, jdbcType=VARCHAR},
+		material_name9=#{material_name9, jdbcType=VARCHAR}, material_unit9=#{material_unit9, jdbcType=VARCHAR}, material_name10=#{material_name10, jdbcType=VARCHAR}, material_unit10=#{material_unit10, jdbcType=VARCHAR}, material_name11=#{material_name11, jdbcType=VARCHAR}, material_unit11=#{material_unit11, jdbcType=VARCHAR},
+		material_name12=#{material_name12, jdbcType=VARCHAR}, material_unit12=#{material_unit12, jdbcType=VARCHAR}
+	where recipe_id=#{recipe_id}
+</update>
+
+<update id="pic_update">
+	update recipeimage
+	set image1=#{image1, jdbcType=VARCHAR}, image2=#{image2, jdbcType=VARCHAR}, image3=#{image3, jdbcType=VARCHAR}, image4=#{image4, jdbcType=VARCHAR}, image5=#{image5, jdbcType=VARCHAR},
+		image6=#{image6, jdbcType=VARCHAR}, image7=#{image7, jdbcType=VARCHAR}, image8=#{image8, jdbcType=VARCHAR}, image9=#{image9, jdbcType=VARCHAR}, image10=#{image10, jdbcType=VARCHAR}
+	where recipe_id=#{recipe_id}
+</update>
+
+<update id="text_update">
+	update recipetext
+	set text1=#{text1, jdbcType=VARCHAR}, text2=#{text2, jdbcType=VARCHAR}, text3=#{text3, jdbcType=VARCHAR}, text4=#{text4, jdbcType=VARCHAR}, text5=#{text5, jdbcType=VARCHAR},
+			text6=#{text6, jdbcType=VARCHAR}, text7=#{text7, jdbcType=VARCHAR}, text8=#{text8, jdbcType=VARCHAR}, text9=#{text9, jdbcType=VARCHAR}, text10=#{text10, jdbcType=VARCHAR}
+	where recipe_id=#{recipe_id}
+</update>
+
+<delete id="delete">
+	delete from recipe where recipe_id = #{recipe_id}
+</delete>
+
+<update id="good">
+	update recipe set good = good + 1 where recipe_id = #{recipe_id}
+</update>
+
+<insert id="scrap">
+	insert into scrap (scr_userid, scr_recipeid, target_userid)
+	select #{scr_userid}, #{scr_recipeid}, #{target_userid} from dual
+	where not exists ( select scr_userid, scr_recipeid, target_userid from scrap 
+		where scr_userid = #{scr_userid} and scr_recipeid = #{scr_recipeid} and target_userid = #{target_userid})
+	<!-- insert into scrap (scr_userid, scr_recipeid)
+	values ( #{scr_userid}, #{scr_recipeid} ) -->
+</insert>
+
+<update id="read">
+	update recipe set readcnt = readcnt + 1 where recipe_id = #{recipe_id}
+</update>
+
+<select id="comment_list" resultType="recipe.RecipeCommentVO">
+	select rc_id, content, no,
+	       (select nickname from member where id=rc.member_id) nickname,
+	       (select user_pic from member where id=rc.member_id) user_pic,
+	       to_char(writedate, 'yyyy-mm-dd hh24:mi:ss') writedate
+	from recipecomment rc
+	where rc_id= #{rc_id}
+	order by no desc
+</select>
+
+<insert id="comment_insert">
+	insert into recipecomment
+	values( #{rc_id}, #{member_id}, #{content}, sysdate, SEQ_RECIPECOMMENT.nextval )
+</insert>
+
+<update id="comment_update">
+	update recipecomment
+	set content=#{content}
+	where no=#{no}
+</update>
+
+<delete id="comment_delete">
+	delete from recipecomment where no=#{no}
+</delete>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

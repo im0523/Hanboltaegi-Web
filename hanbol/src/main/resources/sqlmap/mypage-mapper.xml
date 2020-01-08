@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mypage.mapper">
+
+<select id="activitylist" resultType="community.CommunityVO">
+	select (select count(*) from communitycomment where pid=b.no) comments, (select nickname from member where id = userid) userid, b.* 
+	from (select rownum num, b.* from (select * from community where userid=#{userid} order by writedate, root, step desc) b order by num desc) b
+	where num between #{beginList} and #{endList}
+</select>
+
+<delete id="scrapdelete">
+	delete from scrap where scr_id=#{scr_id}
+</delete>
+
+<select id="scraplist" resultType="mypage.ScrapVO">
+	select nickname, r.*
+	from member m,
+	(select rownum no, r.* from (select r.*, s.scr_id from recipe r, scrap s where r.recipe_id = s.scr_recipeid and s.scr_userid = #{userid} order by scr_date) r) r
+	where m.id = r.userid
+</select>
+
+<select id="mylist" resultType="recipe.RecipeVO">
+	select r.*, nickname
+	from member m, (select rownum no, r.*
+		  from (select * from recipe where userid=#{userid} order by writedate) r ) r
+	where m.id = r.userid
+	order by writedate
+</select>
+
+<delete id="inquirydelete">
+	delete from webinquiry where id=#{id}
+</delete>
+	
+<insert id="insert">
+	insert into webinquiry ( title, content, nickname, userid, filename, filepath )
+	values ( #{title}, #{content}, #{nickname}, #{userid}, #{filename, jdbcType=VARCHAR}, #{filepath, jdbcType=VARCHAR} )
+</insert>
+
+<update id="read">
+	update webinquiry set readcnt = readcnt+1 where id=#{id}
+</update>
+
+<select id="inquirydetail" resultType="mypage.InquiryVO">
+	select * from webinquiry where id=#{id}
+</select>
+
+<select id="list" resultType="mypage.InquiryVO">
+	select * 
+	from (select rownum no, w.* 
+      		from (select * from webinquiry where userid = #{userid} order by id) w )
+	where no between #{beginList} and #{endList}
+	order by writedate desc
+</select>
+
+<select id="ctotalCount" resultType="integer">
+	select count(*) from community where userid = #{userid} 
+</select>
+
+<select id="totalCount" resultType="integer">
+	select count(*) from webinquiry where userid = #{userid} 
+</select>
+
+<select id="information" resultType="mypage.MypageVO">
+	select * from member where id = #{id}
+</select>
+
+<update id="update">
+	update member set nickname=#{nickname}, pwd=#{pwd}, email=#{email}, user_pic=#{user_pic, jdbcType=VARCHAR}, user_picname=#{user_picname, jdbcType=VARCHAR}
+	where id=#{id}
+</update>
+
+<delete id="delete">
+	delete from member where id=#{id}
+</delete>
+
+</mapper>

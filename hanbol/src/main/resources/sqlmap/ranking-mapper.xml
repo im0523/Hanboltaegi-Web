@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ranking.mapper">
+
+<select id="list" resultType="ranking.RankingVO">
+	select rownum no, e.id member_id, e.*
+	from ( select (select count(*) cnt from scrap where target_userid = id) cnt,
+	(select count(*) from recipe where userid = id) writer, 
+	(select sum(readcnt) from recipe r where m.id = r.userid(+) group by userid  ) readcnt ,m.*
+	from (select * from member) m
+	order by writer desc) e
+	where readcnt is not null
+</select>
+
+<select id="mypage_follow_list" resultType="ranking.RankingVO">
+	select f.follower follower,m.id member_id,m.nickname,m.email,m.user_pic
+	from member m, follow f
+	where f.following = m.id
+	and f.follower = #{userid}
+</select>
+
+<select id="detail" resultType="ranking.RankingVO">
+	select r.userid member_id,m.* , r.*
+	from recipe r,member m
+	where userid = id 
+	and userid = #{id}
+</select>
+
+<select id="detail2" resultType="ranking.RankingVO">
+	select id member_id, member.* from member where id = #{id}
+</select>
+
+<select id="review" resultType="ranking.RankingVO">
+	select id member_id, member.* from member where id = #{id}
+</select>
+
+<select id="talk" resultType="ranking.RankingVO">
+	select m.id member_id,c.* from community c, member m where c.userid = m.id and userid = #{id}
+	<!-- select * from community where nickname = #{id} -->
+</select>
+
+<select id="comment2" resultType="ranking.RankingVO">
+	select m.nickname write, rc.*,r.*,m.* 
+	from recipecomment rc,recipe r, member m
+	where rc_id = recipe_id and 
+	m.id = r.userid
+	and	member_id = #{id}
+</select>
+
+<update id="follower">
+	update member set follower = follower+1 where id=#{id}
+</update>
+
+<update id="following">
+	update member set following = following+1 where id=#{target_id}
+</update>
+
+<update id="unfollower">
+	update member set follower = follower-1 where id=#{id}
+</update>
+
+<update id="unfollowing">
+	update member set following = following-1 where id=#{target_id}
+</update>
+
+<select id="follow_select" resultType="Integer">
+	select count(*) cnt 
+	from follow 
+	where following = #{id} and follower = #{target_userid}
+</select>
+
+<select id="follow_list" resultType="ranking.RankingVO">
+	select * from follow where follower = #{id}
+</select>
+
+<insert id="follow_insert">
+	insert into follow
+	values(#{id}, #{target_userid})
+</insert>
+
+<delete id="follow_delete">
+	delete from follow
+    where following = #{id} and follower = #{target_userid}
+</delete>
+</mapper>
